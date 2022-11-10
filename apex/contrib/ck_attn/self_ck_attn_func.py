@@ -14,6 +14,10 @@ class CKSelfAttnFunc(torch.autograd.Function):
         output_biases,
         mask_additive,
         dropout_prob,
+        best_op_id,
+        #num_blocks, 
+        #block_size_k, 
+        #block_size_o,
     ):
         use_biases_t = torch.tensor([input_biases is not None])
         heads_t = torch.tensor([heads])
@@ -33,6 +37,10 @@ class CKSelfAttnFunc(torch.autograd.Function):
             input_weights,
             output_weights,
             dropout_prob,
+            best_op_id,
+            #num_blocks, 
+            #block_size_k, 
+            #block_size_o,
         )
         #ctx.save_for_backward(
         #    use_biases_t,

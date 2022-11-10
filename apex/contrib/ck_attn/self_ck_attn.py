@@ -7,13 +7,6 @@ from torch.nn import Parameter
 
 from .self_ck_attn_func import self_attn_func
 
-@torch.jit.script
-def jit_dropout_add(x, residual, prob, is_training):
-    # type: (Tensor, Tensor, float, bool) -> Tensor
-    out = F.dropout(x, p=prob, training=True)
-    out = residual + out
-    return out
-
 class SelfCKAttn(nn.module):
 
     def __init__(
@@ -23,6 +16,10 @@ class SelfCKAttn(nn.module):
         dropout=0.0, # config.attention_probs_dropout_prob
         bias=False,
         separate_qkv_params=False,
+        best_op_id = 0,
+        #num_blocks = 16, 
+        #block_size_k = 64, 
+        #block_size_o = 64,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -66,6 +63,8 @@ class SelfCKAttn(nn.module):
 
         self.reset_parameters()
         self.attn_func = self_attn_func
+
+        self.best_op_id = best_op_id
 
     def reset_parameters(self):
         if self.separate_qkv_params:
@@ -133,6 +132,7 @@ class SelfCKAttn(nn.module):
             input_bias,
             self.out_proj_bias,
             self.dropout,
+            self.best_op_id,
         )
         return outputs, None
 

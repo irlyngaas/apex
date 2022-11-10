@@ -17,21 +17,25 @@ namespace self {
 std::vector<torch::Tensor> fwd_cuda(int heads, torch::Tensor const &inputs,
                                     torch::Tensor const &input_weights,
                                     torch::Tensor const &output_weights,
-                                    float dropout_prob);
+                                    float dropout_prob, const int best_op_id);
+                                    //, const int num_blocks, const int block_size_k, 
+                                    //const int block_size_o);
 
-std::vector<torch::Tensor> bwd_cuda(
-    int heads, torch::Tensor const &output_grads,
-    torch::Tensor const &matmul2_results, torch::Tensor const &dropout_results,
-    torch::Tensor const &softmax_results,
-    torch::Tensor const &input_lin_results, torch::Tensor const &inputs,
-    torch::Tensor const &input_weights, torch::Tensor const &output_weights,
-    torch::Tensor const &dropout_mask, float dropout_prob);
+//std::vector<torch::Tensor> bwd_cuda(
+//    int heads, torch::Tensor const &output_grads,
+//    torch::Tensor const &matmul2_results, torch::Tensor const &dropout_results,
+//    torch::Tensor const &softmax_results,
+//    torch::Tensor const &input_lin_results, torch::Tensor const &inputs,
+//    torch::Tensor const &input_weights, torch::Tensor const &output_weights,
+//    torch::Tensor const &dropout_mask, float dropout_prob);
 
 std::vector<torch::Tensor>
 fwd(int heads,
     torch::Tensor const &inputs, torch::Tensor const &input_weights,
     torch::Tensor const &output_weights
-    float dropout_prob) {
+    float dropout_prob, const int best_op_id) {
+    //const int num_blocks, const int block_size_k, 
+    //const int block_o) { 
   AT_ASSERTM(inputs.dim() == 3, "expected 3D tensor");
   AT_ASSERTM(input_weights.dim() == 2, "expected 2D tensor");
   AT_ASSERTM(output_weights.dim() == 2, "expected 2D tensor");
@@ -45,7 +49,8 @@ fwd(int heads,
 
   return fwd_cuda(
       heads, inputs, input_weights, output_weights,
-      dropout_prob);
+      dropout_prob, best_op_id);
+      //num_blocks, block_size_k, block_size_o);
       
 //std::vector<torch::Tensor>
 //bwd(int heads, torch::Tensor const &output_grads,
