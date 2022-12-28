@@ -1,6 +1,7 @@
 import torch
 
-import ck_multihead_attn
+#import ck_multihead_attn
+#import self_ck_attn
 
 class CKSelfAttnFunc(torch.autograd.Function):
     @staticmethod
@@ -31,7 +32,8 @@ class CKSelfAttnFunc(torch.autograd.Function):
             dropout_mask,
             matmul2_results,
             outputs,
-        ) = ck_multihead_attn.self_attn_forward(
+        #) = ck_multihead_attn.self_attn_forward(
+        ) = self_ck_attn.self_attn_forward(
             heads,
             inputs,
             input_weights,
@@ -110,4 +112,4 @@ class CKSelfAttnFunc(torch.autograd.Function):
 
 
 
-ck_self_attn_func = CKSelfAttnFunc.apply
+self_attn_func = CKSelfAttnFunc.apply

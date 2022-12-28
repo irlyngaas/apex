@@ -32,7 +32,7 @@ std::vector<torch::Tensor> fwd_cuda(int heads, torch::Tensor const &inputs,
 std::vector<torch::Tensor>
 fwd(int heads,
     torch::Tensor const &inputs, torch::Tensor const &input_weights,
-    torch::Tensor const &output_weights
+    torch::Tensor const &output_weights,
     float dropout_prob, const int best_op_id) {
     //const int num_blocks, const int block_size_k, 
     //const int block_o) { 
@@ -51,6 +51,7 @@ fwd(int heads,
       heads, inputs, input_weights, output_weights,
       dropout_prob, best_op_id);
       //num_blocks, block_size_k, block_size_o);
+}
       
 //std::vector<torch::Tensor>
 //bwd(int heads, torch::Tensor const &output_grads,
@@ -97,8 +98,8 @@ fwd(int heads,
 } // end namespace ck_attn
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("self_attn_forward", &ck::self::fwd,
+  m.def("self_attn_forward", &ck_attn::self::fwd,
         "Self Multihead Attention Forward.");
-//  m.def("self_attn_backward", &ck::self::bwd,
+//  m.def("self_attn_backward", &ck_attn::self::bwd,
 //        "Self Multihead Attention Backward.");
 }

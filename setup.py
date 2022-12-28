@@ -492,6 +492,60 @@ if "--fmha" in sys.argv:
                                                       '--use_fast_math'] + version_dependent_macros + generator_flag + cc_flag},
                           include_dirs=[os.path.join(this_dir, "apex/contrib/csrc"), os.path.join(this_dir, "apex/contrib/csrc/fmha/src")]))
 
+if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
+    if "--ck_attn" in sys.argv:
+        sys.argv.remove("--ck_attn")
+
+    if torch.utils.cpp_extension.CUDA_HOME is None and not IS_ROCM_PYTORCH:
+        raise RuntimeError("--ck_attn was requested, but nvcc was not found.  Are you sure your environment has nvcc available?  If you're installing within a container from https://hub.docker.com/r/pytorch/pytorch, only images whose names contain 'devel' will provide nvcc.")
+    else:
+        # Check, if CUDA11 is installed for compute capability 8.0
+        cc_flag = []
+        if not IS_ROCM_PYTORCH:
+            _, bare_metal_major, _ = get_cuda_bare_metal_version(torch.utils.cpp_extension.CUDA_HOME)
+            if int(bare_metal_major) >= 11:
+                cc_flag.append('-gencode')
+                cc_flag.append('arch=compute_80,code=sm_80')
+                cc_flag.append('-gencode')
+                cc_flag.append('arch=compute_86,code=sm_86')
+
+        #subprocess.run(["git", "submodule", "update", "--init", "apex/contrib/csrc/multihead_attn/cutlass"])
+        nvcc_args_mha = ['-O3',
+                         '-gencode',
+                         'arch=compute_70,code=sm_70',
+                         '-Iapex/contrib/csrc/multihead_attn/cutlass',
+                         '-U__CUDA_NO_HALF_OPERATORS__',
+                         '-U__CUDA_NO_HALF_CONVERSIONS__',
+                         '--expt-relaxed-constexpr',
+                         '--expt-extended-lambda',
+                         '--use_fast_math'] + version_dependent_macros + generator_flag + cc_flag
+        hipcc_args_mha = ['-O3',
+                          '-std=c++17',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
+                          '-lfused_attention -L/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build/fused_attention',
+                          '-I/opt/rocm-5.3.0/include/hiprand',
+                          '-I/opt/rocm-5.3.0/include/rocrand',
+                          '-U__HIP_NO_HALF_OPERATORS__',
+                          '-U__HIP_NO_HALF_CONVERSIONS__'] + version_dependent_macros + generator_flag
+        if found_Backward_Pass_Guard:
+            hipcc_args_mha = hipcc_args_mha + ['-DBACKWARD_PASS_GUARD'] + ['-DBACKWARD_PASS_GUARD_CLASS=BackwardPassGuard']
+        if found_ROCmBackward_Pass_Guard:
+            hipcc_args_mha = hipcc_args_mha + ['-DBACKWARD_PASS_GUARD'] + ['-DBACKWARD_PASS_GUARD_CLASS=ROCmBackwardPassGuard']
+
+        ext_modules.append(
+            CUDAExtension(
+                name='fast_multihead_attn',
+                sources=[
+                    'apex/contrib/csrc/ck_attn/ck_attn_frontend.cpp',
+                    'apex/contrib/csrc/ck_attn/self_ck_attn.cu',
+                ],
+                include_dirs=[os.path.join(this_dir, 'csrc'),
+                                        os.path.join(this_dir, 'apex/contrib/csrc/ck_attn')],
+                          extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
+                                              'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha}
+            )
+        )
 
 if "--fast_multihead_attn" in sys.argv or "--cuda_ext" in sys.argv:
     if "--fast_multihead_attn" in sys.argv:

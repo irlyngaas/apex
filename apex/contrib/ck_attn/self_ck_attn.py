@@ -7,7 +7,7 @@ from torch.nn import Parameter
 
 from .self_ck_attn_func import self_attn_func
 
-class SelfCKAttn(nn.module):
+class SelfCKAttn(nn.Module):
 
     def __init__(
         self,

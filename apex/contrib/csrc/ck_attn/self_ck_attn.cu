@@ -46,7 +46,7 @@ std::vector<torch::Tensor> fwd_cuda(int heads, torch::Tensor const &inputs,
   torch::Tensor attn_outputs = torch::empty_like(inputs, act_options);
   torch::Tensor outputs = torch::empty_like(inputs, act_options);
 
-  void *q_lin_results_ptr = static_cast<void *>(input_lin_results.data_ptr());
+  void *q_lin_results_ptr = static_cast<void *>(static_cast<half *>(input_lin_results.data_ptr()));
   //void *k_lin_results_ptr = static_cast<void *>(
   //    static_cast<half *>(input_lin_results.data_ptr()) + head_dim);
   void *k_lin_results_ptr = static_cast<void *>(
