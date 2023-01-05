@@ -523,7 +523,6 @@ if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                           '-std=c++17',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
-                          '-lfused_attention -L/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build/fused_attention',
                           '-I/opt/rocm-5.3.0/include/hiprand',
                           '-I/opt/rocm-5.3.0/include/rocrand',
                           '-U__HIP_NO_HALF_OPERATORS__',
@@ -535,7 +534,7 @@ if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
 
         ext_modules.append(
             CUDAExtension(
-                name='fast_multihead_attn',
+                name='self_ck_attn',
                 sources=[
                     'apex/contrib/csrc/ck_attn/ck_attn_frontend.cpp',
                     'apex/contrib/csrc/ck_attn/self_ck_attn.cu',
@@ -543,7 +542,11 @@ if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                 include_dirs=[os.path.join(this_dir, 'csrc'),
                                         os.path.join(this_dir, 'apex/contrib/csrc/ck_attn')],
                           extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
-                                              'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha}
+                                              'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha},
+                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build4/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
+                          libraries=['fused_attention', 'device_operations']
+                          #dlink=True,
+                          #dlink_libraries=['fused_attention', 'device_operations']
             )
         )
 

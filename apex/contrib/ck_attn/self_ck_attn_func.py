@@ -1,7 +1,7 @@
 import torch
 
 #import ck_multihead_attn
-#import self_ck_attn
+import self_ck_attn
 
 class CKSelfAttnFunc(torch.autograd.Function):
     @staticmethod
@@ -13,7 +13,7 @@ class CKSelfAttnFunc(torch.autograd.Function):
         output_weights,
         input_biases,
         output_biases,
-        mask_additive,
+        #mask_additive,
         dropout_prob,
         best_op_id,
         #num_blocks, 
@@ -24,13 +24,13 @@ class CKSelfAttnFunc(torch.autograd.Function):
         heads_t = torch.tensor([heads])
         dropout_prob_t = torch.tensor([dropout_prob])
         null_tensor = torch.tensor([])
-        mask_additive_t = torch.tensor([mask_additive])
+        #mask_additive_t = torch.tensor([mask_additive])
         (
-            input_lin_results,
-            softmax_results,
-            dropout_results,
-            dropout_mask,
-            matmul2_results,
+            #input_lin_results,
+            #softmax_results,
+            #dropout_results,
+            #dropout_mask,
+            #matmul2_results,
             outputs,
         #) = ck_multihead_attn.self_attn_forward(
         ) = self_ck_attn.self_attn_forward(
