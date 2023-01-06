@@ -21,7 +21,7 @@ class SelfCKAttnTest(unittest.TestCase):
                                            self.heads,
                                            dropout=self.dropout_prob,
                                            bias=False,
-                                           separate_qkv_params=False,
+                                           separate_qkv_params=True,
                                            best_op_id=self.best_op_id)
         self.ref_layer.cuda().half()
         self.ref_layer.reset_parameters()

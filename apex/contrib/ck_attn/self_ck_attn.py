@@ -102,6 +102,9 @@ class SelfCKAttn(nn.Module):
                 .reshape(3 * self.embed_dim, self.embed_dim)
                 .contiguous()
             )
+            input_weights_q = self.q_weight.view(self.num_heads, 1, self.head_dim, self.embed_dim).reshape(self.embed_dim, self.embed_dim)
+            input_weights_k = self.k_weight.view(self.num_heads, 1, self.head_dim, self.embed_dim).reshape(self.embed_dim, self.embed_dim)
+            input_weights_v = self.v_weight.view(self.num_heads, 1, self.head_dim, self.embed_dim).reshape(self.embed_dim, self.embed_dim)
         else:
             input_weights = self.in_proj_weight
 
@@ -124,16 +127,31 @@ class SelfCKAttn(nn.Module):
         else:
             input_bias = None
 
-        outputs = self.attn_func(
-            self.num_heads,
-            query,
-            input_weights,
-            self.out_proj_weight,
-            input_bias,
-            self.out_proj_bias,
-            self.dropout,
-            self.best_op_id,
-        )
+        if self.separate_qkv_params:
+          outputs = self.attn_func(
+              self.num_heads,
+              query,
+              input_weights_q,
+              input_weights_k,
+              input_weights_v,
+              self.out_proj_weight,
+              input_bias,
+              self.out_proj_bias,
+              self.dropout,
+              self.best_op_id,
+          )
+
+        else:
+          outputs = self.attn_func(
+              self.num_heads,
+              query,
+              input_weights,
+              self.out_proj_weight,
+              input_bias,
+              self.out_proj_bias,
+              self.dropout,
+              self.best_op_id,
+          )
         return outputs, None
 
   
