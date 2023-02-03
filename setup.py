@@ -491,6 +491,64 @@ if "--fmha" in sys.argv:
                                                       '--expt-extended-lambda',
                                                       '--use_fast_math'] + version_dependent_macros + generator_flag + cc_flag},
                           include_dirs=[os.path.join(this_dir, "apex/contrib/csrc"), os.path.join(this_dir, "apex/contrib/csrc/fmha/src")]))
+if "--self_ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
+    if "--self_ck_attn" in sys.argv:
+        sys.argv.remove("--self_ck_attn")
+
+    if torch.utils.cpp_extension.CUDA_HOME is None and not IS_ROCM_PYTORCH:
+        raise RuntimeError("--self_ck_attn was requested, but nvcc was not found.  Are you sure your environment has nvcc available?  If you're installing within a container from https://hub.docker.com/r/pytorch/pytorch, only images whose names contain 'devel' will provide nvcc.")
+    else:
+        # Check, if CUDA11 is installed for compute capability 8.0
+        cc_flag = []
+        if not IS_ROCM_PYTORCH:
+            _, bare_metal_major, _ = get_cuda_bare_metal_version(torch.utils.cpp_extension.CUDA_HOME)
+            if int(bare_metal_major) >= 11:
+                cc_flag.append('-gencode')
+                cc_flag.append('arch=compute_80,code=sm_80')
+                cc_flag.append('-gencode')
+                cc_flag.append('arch=compute_86,code=sm_86')
+
+        #subprocess.run(["git", "submodule", "update", "--init", "apex/contrib/csrc/multihead_attn/cutlass"])
+        nvcc_args_mha = ['-O3',
+                         '-gencode',
+                         'arch=compute_70,code=sm_70',
+                         '-Iapex/contrib/csrc/multihead_attn/cutlass',
+                         '-U__CUDA_NO_HALF_OPERATORS__',
+                         '-U__CUDA_NO_HALF_CONVERSIONS__',
+                         '--expt-relaxed-constexpr',
+                         '--expt-extended-lambda',
+                         '--use_fast_math'] + version_dependent_macros + generator_flag + cc_flag
+        hipcc_args_mha = ['-O3',
+                          '-std=c++17',
+                          '-fPIC',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
+                          '-I/opt/rocm-5.3.0/include/hiprand',
+                          '-I/opt/rocm-5.3.0/include/rocrand',
+                          '-U__HIP_NO_HALF_OPERATORS__',
+                          '-U__HIP_NO_HALF_CONVERSIONS__'] + version_dependent_macros + generator_flag
+        if found_Backward_Pass_Guard:
+            hipcc_args_mha = hipcc_args_mha + ['-DBACKWARD_PASS_GUARD'] + ['-DBACKWARD_PASS_GUARD_CLASS=BackwardPassGuard']
+        if found_ROCmBackward_Pass_Guard:
+            hipcc_args_mha = hipcc_args_mha + ['-DBACKWARD_PASS_GUARD'] + ['-DBACKWARD_PASS_GUARD_CLASS=ROCmBackwardPassGuard']
+
+        ext_modules.append(
+            CUDAExtension(
+                name='self_ck_attn',
+                sources=[
+                    'apex/contrib/csrc/self_ck_attn/ck_attn_frontend.cpp',
+                    'apex/contrib/csrc/self_ck_attn/self_ck_attn.cu',
+                ],
+                include_dirs=[os.path.join(this_dir, 'csrc'),
+                                        os.path.join(this_dir, 'apex/contrib/csrc/self_ck_attn')],
+                          extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
+                                              'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha},
+                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build_alt/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
+                          libraries=['fused_attention', 'device_operations']
+                          #dlink=True,
+                          #dlink_libraries=['fused_attention', 'device_operations']
+            )
+        )
 
 if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
     if "--ck_attn" in sys.argv:
@@ -521,8 +579,10 @@ if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                          '--use_fast_math'] + version_dependent_macros + generator_flag + cc_flag
         hipcc_args_mha = ['-O3',
                           '-std=c++17',
-                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
+                          '-fPIC',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/cklib_fpic/include',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention_separated',
                           '-I/opt/rocm-5.3.0/include/hiprand',
                           '-I/opt/rocm-5.3.0/include/rocrand',
                           '-U__HIP_NO_HALF_OPERATORS__',
@@ -543,8 +603,8 @@ if "--ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                                         os.path.join(this_dir, 'apex/contrib/csrc/ck_attn')],
                           extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
                                               'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha},
-                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build4/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
-                          libraries=['fused_attention', 'device_operations']
+                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/buildUnit/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/buildUnit/fused_attention_separated', '/gpfs/alpine/med106/world-shared/irl1/cklib_fpic/lib'],
+                          libraries=['fused_attention', 'fused_attention_separated', 'device_operations', 'utility']
                           #dlink=True,
                           #dlink_libraries=['fused_attention', 'device_operations']
             )
