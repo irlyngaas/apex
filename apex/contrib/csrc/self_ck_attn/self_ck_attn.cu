@@ -10,8 +10,7 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <torch/extension.h>
 
-#include "fused_attention.hpp"
-//#include "fused_attention_separated.hpp"
+#include "fused_attention_torch.hpp"
 
 namespace ck_attn {
 namespace self {
@@ -47,9 +46,7 @@ std::vector<torch::Tensor> fwd_cuda(torch::Tensor const &query,
       torch::empty({sequences, seq_len, heads, head_dim}, act_options);
   void *attn_outputs_ptr = static_cast<void *>(attn_outputs.data_ptr());
 
-  //fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query_ptr, key_ptr, value_ptr, attn_outputs_ptr, best_op_id);
-  fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query_ptr, key_ptr, value_ptr, out_ptr, best_op_id);
-  //fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query.data_ptr<half>(), key.data_ptr<half>(), value.data_ptr<half>(), attn_outputs.data_ptr<half>(), best_op_id);
+  fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query, key, value, out, best_op_id);
 
 
   return { attn_outputs };

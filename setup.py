@@ -522,7 +522,7 @@ if "--self_ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                           '-std=c++17',
                           '-fPIC',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
-                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention_torch',
                           '-I/opt/rocm-5.3.0/include/hiprand',
                           '-I/opt/rocm-5.3.0/include/rocrand',
                           '-U__HIP_NO_HALF_OPERATORS__',
@@ -543,8 +543,8 @@ if "--self_ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                                         os.path.join(this_dir, 'apex/contrib/csrc/self_ck_attn')],
                           extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
                                               'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha},
-                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build_alt/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
-                          libraries=['fused_attention', 'device_operations']
+                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build_Correct/fused_attention_torch', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
+                          libraries=['fused_attention_torch', 'device_operations']
                           #dlink=True,
                           #dlink_libraries=['fused_attention', 'device_operations']
             )

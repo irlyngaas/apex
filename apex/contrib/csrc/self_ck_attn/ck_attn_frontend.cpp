@@ -2,6 +2,7 @@
 
 #include <cuda_fp16.h>
 #include <torch/extension.h>
+#include <ATen/ATen.h>
 
 #define CHECK_CUDA(x)                                                          \
   AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
@@ -41,11 +42,13 @@ fwd(torch::Tensor const &query,
   AT_ASSERTM(value.dim() == 4, "expected 4D tensor");
 
   //AT_ASSERTM(query.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
+  //           "Query: Only HALF is supported");
   //AT_ASSERTM(key.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
+  //           "Key: Only HALF is supported");
   //AT_ASSERTM(value.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
+  //           "Value: Only HALF is supported");
+  //AT_ASSERTM(out.type().scalarType() == at::ScalarType::Half,
+  //           "Out: Only HALF is supported");
 
   return fwd_cuda( 
       query,
