@@ -11,7 +11,6 @@
 #include <torch/extension.h>
 
 #include "fused_attention.hpp"
-//#include "fused_attention_separated.hpp"
 
 namespace ck_attn {
 namespace self {
@@ -22,8 +21,6 @@ std::vector<torch::Tensor> fwd_cuda(torch::Tensor const &query,
                                     torch::Tensor const &out,
                                     float dropout_prob, const int best_op_id) {
 
-  //std::cout << inputs << std::endl;
-  //std::cout << input_weights << std::endl;
   const int sequences = query.size(0);
   const int heads = query.size(1);
   const int seq_len = query.size(2);
