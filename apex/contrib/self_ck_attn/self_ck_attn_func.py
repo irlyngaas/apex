@@ -11,6 +11,11 @@ class CKSelfAttnFunc(torch.autograd.Function):
         key,
         value,
         out,
+        num_sequences,
+        seq_length,
+        embed_dim,
+        num_heads,
+        head_dim,
         dropout_prob,
         best_op_id,
     ):
@@ -29,6 +34,11 @@ class CKSelfAttnFunc(torch.autograd.Function):
             key,
             value,
             out,
+            num_sequences,
+            seq_length,
+            embed_dim,
+            num_heads,
+            head_dim,
             dropout_prob,
             best_op_id,
         )

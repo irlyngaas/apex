@@ -523,6 +523,14 @@ if "--self_ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
                           '-fPIC',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/include',
                           '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/fused_attention',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/onnxruntime/python/tools/kernel_explorer',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/onnxruntime',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/include/onnxruntime',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release/_deps/gsl-src/include',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release/_deps/abseil_cpp-src',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release/_deps/mp11-src/include',
+                          '-I/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release/_deps/google_nsync-src/public',
                           '-I/opt/rocm-5.3.0/include/hiprand',
                           '-I/opt/rocm-5.3.0/include/rocrand',
                           '-U__HIP_NO_HALF_OPERATORS__',
@@ -536,15 +544,17 @@ if "--self_ck_attn" in sys.argv or "--cuda_ext" in sys.argv:
             CUDAExtension(
                 name='self_ck_attn',
                 sources=[
-                    'apex/contrib/csrc/self_ck_attn/ck_attn_frontend.cpp',
+                    'apex/contrib/csrc/self_ck_attn/ck_attn_frontend.cu',
                     'apex/contrib/csrc/self_ck_attn/self_ck_attn.cu',
                 ],
                 include_dirs=[os.path.join(this_dir, 'csrc'),
                                         os.path.join(this_dir, 'apex/contrib/csrc/self_ck_attn')],
                           extra_compile_args={'cxx': ['-O3',] + version_dependent_macros + generator_flag,
                                               'nvcc':nvcc_args_mha if not IS_ROCM_PYTORCH else hipcc_args_mha},
-                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build_alt/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib'],
+                          library_dirs=['/gpfs/alpine/med106/world-shared/irl1/ckIntegration/composable_kernel/extension/build_Correct/fused_attention', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/cklib/lib', '/gpfs/alpine/med106/world-shared/irl1/ckIntegration/onnxruntime/build_rocm54_7/Release'],
                           libraries=['fused_attention', 'device_operations']
+                          #libraries=['fused_attention', 'device_operations', '_kernel_explorer', 'onnxruntime_providers_rocm']
+                          #libraries=['fused_attention', 'device_operations', 'onnxruntime_providers_rocm', 'onnxruntime_pybind11_state']
                           #dlink=True,
                           #dlink_libraries=['fused_attention', 'device_operations']
             )

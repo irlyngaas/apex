@@ -2,6 +2,7 @@
 
 #include <cuda_fp16.h>
 #include <torch/extension.h>
+#include "python/tools/kernel_explorer/device_array.h"
 
 #define CHECK_CUDA(x)                                                          \
   AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
@@ -14,44 +15,38 @@
 namespace ck_attn {
 namespace self {
 
-std::vector<torch::Tensor> fwd_cuda(torch::Tensor const &query,
-                                    torch::Tensor const &key,
-                                    torch::Tensor const &value,
-                                    torch::Tensor const &out,
+std::vector<torch::Tensor> fwd_cuda(onnxruntime::DeviceArray& query,
+                                    onnxruntime::DeviceArray& key,
+                                    onnxruntime::DeviceArray& value,
+                                    onnxruntime::DeviceArray& out,
+                                    int num_sequences,
+                                    int seq_length,
+                                    int embed_dim,
+                                    int num_heads,
+                                    int head_dim,
                                     float dropout_prob, const int best_op_id);
-                                    //, const int num_blocks, const int block_size_k, 
-                                    //const int block_size_o);
 
-//std::vector<torch::Tensor> bwd_cuda(
-//    int heads, torch::Tensor const &output_grads,
-//    torch::Tensor const &matmul2_results, torch::Tensor const &dropout_results,
-//    torch::Tensor const &softmax_results,
-//    torch::Tensor const &input_lin_results, torch::Tensor const &inputs,
-//    torch::Tensor const &input_weights, torch::Tensor const &output_weights,
-//    torch::Tensor const &dropout_mask, float dropout_prob);
-
-std::vector<torch::Tensor>
-fwd(torch::Tensor const &query, 
-    torch::Tensor const &key, 
-    torch::Tensor const &value, 
-    torch::Tensor const &out,
-    float dropout_prob, const int best_op_id) {
-  AT_ASSERTM(query.dim() == 4, "expected 4D tensor");
-  AT_ASSERTM(key.dim() == 4, "expected 4D tensor");
-  AT_ASSERTM(value.dim() == 4, "expected 4D tensor");
-
-  //AT_ASSERTM(query.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
-  //AT_ASSERTM(key.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
-  //AT_ASSERTM(value.type().scalarType() == at::ScalarType::Half,
-  //           "Only HALF is supported");
+std::vector<torch::Tensor> fwd(onnxruntime::DeviceArray& query, 
+                               onnxruntime::DeviceArray& key, 
+                               onnxruntime::DeviceArray& value, 
+                               onnxruntime::DeviceArray& out,
+                               int num_sequences,
+                               int seq_length,
+                               int embed_dim,
+                               int num_heads,
+                               int head_dim,
+                               float dropout_prob, const int best_op_id) {
 
   return fwd_cuda( 
       query,
       key,
       value,
       out,
+      num_sequences,
+      seq_length,
+      embed_dim,
+      num_heads,
+      head_dim,
       dropout_prob, best_op_id);
 }
       

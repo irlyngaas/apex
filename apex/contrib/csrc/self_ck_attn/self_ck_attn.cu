@@ -10,46 +10,38 @@
 #include <ATen/cuda/CUDAContext.h>
 #include <torch/extension.h>
 
+//Choose whether to pass pointer or deviceArray object
+//#include "fused_attention_deviceArray.hpp"
 #include "fused_attention.hpp"
-//#include "fused_attention_separated.hpp"
+#include "python/tools/kernel_explorer/device_array.h"
 
 namespace ck_attn {
 namespace self {
 
-std::vector<torch::Tensor> fwd_cuda(torch::Tensor const &query,
-                                    torch::Tensor const &key,
-                                    torch::Tensor const &value,
-                                    torch::Tensor const &out,
+std::vector<torch::Tensor> fwd_cuda(onnxruntime::DeviceArray& query,
+                                    onnxruntime::DeviceArray& key,
+                                    onnxruntime::DeviceArray& value,
+                                    onnxruntime::DeviceArray& out,
+                                    int num_sequences,
+                                    int seq_length,
+                                    int embed_dim,
+                                    int num_heads,
+                                    int head_dim,
                                     float dropout_prob, const int best_op_id) {
 
-  //std::cout << inputs << std::endl;
-  //std::cout << input_weights << std::endl;
-  const int sequences = query.size(0);
-  const int heads = query.size(1);
-  const int seq_len = query.size(2);
-  const int head_dim = query.size(3);
-
-
-  cublasHandle_t handle = at::cuda::getCurrentCUDABlasHandle();
-  cudaStream_t stream = at::cuda::getCurrentCUDAStream().stream();
-  cublasSetStream(handle, stream);
-
-  auto act_options = query.options().requires_grad(false);
-
-
-  void *query_ptr = static_cast<void *>(query.data_ptr());
-  void *key_ptr = static_cast<void *>(key.data_ptr());
-  void *value_ptr = static_cast<void *>(value.data_ptr());
-  void *out_ptr = static_cast<void *>(out.data_ptr());
 
   torch::Tensor attn_outputs = 
       //torch::empty({sequences, seq_len, heads, head_dim});
-      torch::empty({sequences, seq_len, heads, head_dim}, act_options);
+      //torch::empty({num_sequences, seq_length, num_heads, head_dim}, act_options);
+      torch::empty({num_sequences, seq_length, num_heads, head_dim});
   void *attn_outputs_ptr = static_cast<void *>(attn_outputs.data_ptr());
 
-  //fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query_ptr, key_ptr, value_ptr, attn_outputs_ptr, best_op_id);
-  fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query_ptr, key_ptr, value_ptr, out_ptr, best_op_id);
-  //fused_attention(sequences, heads, seq_len, seq_len, head_dim, head_dim, query.data_ptr<half>(), key.data_ptr<half>(), value.data_ptr<half>(), attn_outputs.data_ptr<half>(), best_op_id);
+  void *query_ptr = query.ptr();
+  void *key_ptr   = key.ptr();
+  void *value_ptr = value.ptr();
+  void *out_ptr   = out.ptr();
+  //fused_attention(num_sequences, num_heads, seq_length, seq_length, head_dim, head_dim, query, key, value, out, best_op_id);
+  fused_attention(num_sequences, num_heads, seq_length, seq_length, head_dim, head_dim, query_ptr, key_ptr, value_ptr, out_ptr, best_op_id);
 
 
   return { attn_outputs };
